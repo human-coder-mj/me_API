@@ -1,0 +1,5 @@
+.pg_service.conf
+__pycache__/
+.env
+.venv/
+venv/
