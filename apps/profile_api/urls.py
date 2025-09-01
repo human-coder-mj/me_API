@@ -14,9 +14,9 @@ urlpatterns = [
     # Comprehensive profile with all related data
     path('profiles/<int:pk>/comprehensive/', views.ComprehensiveProfileView.as_view(), name='profile-comprehensive'),
 
-    # Profile by email endpoints
-    path('profiles/email/<str:email>/', views.profile_by_email, name='profile-by-email'),
-    path('profiles/email/<str:email>/comprehensive/', views.comprehensive_profile_by_email, name='comprehensive-profile-by-email'),
+    # Profile by name endpoints (main requirement)
+    path('profile/<str:name>/', views.comprehensive_profile_by_name, name='profile-by-name'),
+    path('profiles/name/<str:name>/', views.profile_by_name, name='profile-basic-by-name'),
 
     # Query endpoints as per requirements
     path('projects/', views.projects_by_skill, name='projects-by-skill'),  # GET /projects?skill=python
