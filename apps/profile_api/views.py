@@ -57,33 +57,35 @@ class ComprehensiveProfileView(generics.RetrieveAPIView):
 
 
 @api_view(['GET'])
-def profile_by_email(request, email):
+def profile_by_name(request, name):
     """
-    API view to retrieve a profile by email address
+    API view to retrieve a profile by name
     """
     try:
-        profile = Profile.objects.get(email=email)
+        # Use iexact for case-insensitive exact match
+        profile = Profile.objects.get(name__iexact=name)
         serializer = ProfileSerializer(profile)
         return Response(serializer.data)
     except Profile.DoesNotExist:
         return Response(
-            {'error': 'Profile with this email does not exist'}, 
+            {'error': f'Profile with name "{name}" does not exist'}, 
             status=status.HTTP_404_NOT_FOUND
         )
 
 
 @api_view(['GET'])
-def comprehensive_profile_by_email(request, email):
+def comprehensive_profile_by_name(request, name):
     """
-    API view to retrieve comprehensive profile by email address
+    API view to retrieve comprehensive profile by name
     """
     try:
-        profile = Profile.objects.get(email=email)
+        # Use iexact for case-insensitive exact match
+        profile = Profile.objects.get(name__iexact=name)
         serializer = ComprehensiveProfileSerializer(profile)
         return Response(serializer.data)
     except Profile.DoesNotExist:
         return Response(
-            {'error': 'Profile with this email does not exist'}, 
+            {'error': f'Profile with name "{name}" does not exist'}, 
             status=status.HTTP_404_NOT_FOUND
         )
 
@@ -270,8 +272,8 @@ def api_documentation(request):
                 "PUT /api/v1/profiles/{id}/": "Update profile (admin only)",
                 "DELETE /api/v1/profiles/{id}/": "Delete profile (admin only)",
                 "GET /api/v1/profiles/{id}/comprehensive/": "Get profile with all related data (public)",
-                "GET /api/v1/profiles/email/{email}/": "Get profile by email (public)",
-                "GET /api/v1/profiles/email/{email}/comprehensive/": "Get comprehensive profile by email (public)"
+                "GET /api/v1/profile/{name}/": "Get comprehensive profile by name (public) - Main endpoint",
+                "GET /api/v1/profiles/name/{name}/": "Get basic profile by name (public)"
             },
             "query_endpoints": {
                 "GET /api/v1/projects?skill=python": "Filter projects by skill (public)",
@@ -280,6 +282,16 @@ def api_documentation(request):
             },
             "statistics": {
                 "GET /api/v1/stats/": "Get API statistics (public)"
+            },
+            "admin_features": {
+                "description": "Admin users can create complete profiles with all related data",
+                "admin_panel": "/admin/ - Full Django admin interface",
+                "features": [
+                    "Create profile with education, skills, projects, work experience, social links",
+                    "Inline editing of all related data",
+                    "Bulk operations and advanced filtering",
+                    "Individual model management for each category"
+                ]
             }
         },
         "example_responses": {
