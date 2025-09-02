@@ -251,3 +251,25 @@ def skill_stats(request):
     }
     
     return Response(stats)
+
+@api_view(['GET'])
+def top_skills(request):
+    """
+    API view to get top skills by usage
+    GET /skills/top
+    """
+    try:
+        # Get skills with count of how many profiles have them
+        top_skills = Skill.objects.values('name', 'category').annotate(
+            usage_count=Count('profile')
+        ).order_by('-usage_count')[:10]
+
+        return Response({
+            'top_skills': list(top_skills)
+        })
+
+    except ImportError:
+        return Response(
+            {'error': 'Skills app not available'}, 
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
