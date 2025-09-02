@@ -3,6 +3,13 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Try to import dj_database_url for production deployment
+try:
+    import dj_database_url
+    HAS_DJ_DATABASE_URL = True
+except ImportError:
+    HAS_DJ_DATABASE_URL = False
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -15,9 +22,18 @@ APPS_DIR = os.path.join(BASE_DIR, "apps")
 sys.path.append(APPS_DIR)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.vercel.app',
+    '.now.sh'
+]
+
+# Add any custom domains if provided
+if os.getenv('CUSTOM_DOMAIN'):
+    ALLOWED_HOSTS.append(os.getenv('CUSTOM_DOMAIN'))
 
 
 # Application definition
@@ -40,6 +56,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files on Vercel
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -68,16 +85,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'me_API.wsgi.application'
 
 
-os.environ['PGSERVICEFILE'] = '.pg_service.conf'
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "OPTIONS": {
-            "service": "my_service",
-        },
+# Database Configuration
+# Use DATABASE_URL environment variable for production (Vercel)
+# Fall back to PostgreSQL service file for local development
+if os.getenv('DATABASE_URL') and HAS_DJ_DATABASE_URL:
+    # Production database configuration (Vercel)
+    DATABASES = {
+        'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
     }
-}
+else:
+    # Local development database configuration
+    os.environ['PGSERVICEFILE'] = '.pg_service.conf'
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "OPTIONS": {
+                "service": "my_service",
+            },
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -113,7 +139,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
+
+# Additional locations of static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Simplified static file serving for Vercel
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
