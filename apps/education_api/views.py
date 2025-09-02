@@ -2,25 +2,13 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAdminUser
 from django.db.models import Q
 from profile_api.models import Profile
+from me_API.permissions import IsAdminUserOrReadOnly
 from .models import Education
 from .serializers import EducationSerializer,\
     EducationListSerializer, EducationCreateUpdateSerializer
 
-
-class IsAdminUserOrReadOnly(IsAdminUser):
-    """
-    Custom permission class: Only admin users can create/update/delete.
-    Anyone can read (GET requests are allowed for everyone).
-    """
-    def has_permission(self, request, view):
-        # Allow read permissions for any request (GET, HEAD, OPTIONS)
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
-            return True
-        # For write permissions, only allow admin users
-        return super().has_permission(request, view)
 
 
 class EducationListCreateView(generics.ListCreateAPIView):
@@ -76,27 +64,6 @@ class EducationDetailView(generics.RetrieveUpdateDestroyAPIView):
             return EducationCreateUpdateSerializer
         return EducationSerializer
 
-
-@api_view(['GET'])
-def education_by_profile(request, profile_id):
-    """
-    API view to get all education records for a specific profile
-    """
-    try:
-        education_records = Education.objects.filter(profile_id=profile_id).order_by('-start_date')
-        serializer = EducationListSerializer(education_records, many=True)
-        return Response({
-            'profile_id': profile_id,
-            'education_count': len(education_records),
-            'education': serializer.data
-        })
-    except Exception:
-        return Response(
-            {'error': 'Failed to fetch education records'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
 @api_view(['GET'])
 def education_by_profile_name(request, name):
     """
@@ -127,31 +94,6 @@ def education_by_profile_name(request, name):
             {'error': 'Failed to fetch education records'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
-@api_view(['GET'])
-def education_institutions(request):
-    """
-    API view to get list of all institutions
-    """
-    institutions = Education.objects.values_list('institution', flat=True).distinct().order_by('institution')
-    return Response({
-        'institutions': list(institutions),
-        'count': len(institutions)
-    })
-
-
-@api_view(['GET'])
-def education_degrees(request):
-    """
-    API view to get list of all degrees
-    """
-    degrees = Education.objects.values_list('degree', flat=True).distinct().order_by('degree')
-    return Response({
-        'degrees': list(degrees),
-        'count': len(degrees)
-    })
-
 
 @api_view(['GET'])
 def education_search(request):

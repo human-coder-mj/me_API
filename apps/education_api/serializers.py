@@ -36,7 +36,7 @@ class EducationListSerializer(serializers.ModelSerializer):
     """
     profile_name = serializers.CharField(source='profile.name', read_only=True)
     duration = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Education
         fields = [
@@ -59,36 +59,35 @@ class EducationCreateUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating and updating education records (admin only)
     """
-    
     class Meta:
         model = Education
         fields = [
             'profile', 'institution', 'degree', 'field_of_study',
             'start_date', 'end_date', 'grade', 'description'
         ]
-    
+
     def validate(self, data):
         """
         Validate education data
         """
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        
+
         # Validate date logic
         if start_date and end_date and start_date >= end_date:
             raise serializers.ValidationError(
                 "Start date must be before end date."
             )
-        
+
         # Validate required fields
         if not data.get('institution'):
             raise serializers.ValidationError(
                 "Institution is required."
             )
-        
+
         if not data.get('degree'):
             raise serializers.ValidationError(
                 "Degree is required."
             )
-        
+
         return data
