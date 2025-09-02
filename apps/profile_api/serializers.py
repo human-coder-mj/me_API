@@ -1,9 +1,10 @@
 from rest_framework import serializers
+from education_api.models import Education
+from skills_api.models import Skill
+from projects_api.models import Project
+from experience_api.models import WorkExperience
+from social_api.models import SocialLink
 from .models import Profile
-
-
-# Constants
-EMAIL_EXISTS_ERROR = "A profile with this email already exists."
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -15,21 +16,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['id', 'name', 'email', 'bio', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
-
-    def validate_email(self, value):
-        """
-        Validate email uniqueness for both create and update operations
-        """
-        # For updates, check if email is being changed and if new email exists
-        if self.instance and self.instance.email != value:
-            if Profile.objects.filter(email=value).exists():
-                raise serializers.ValidationError(EMAIL_EXISTS_ERROR)
-
-        # For creation, check if email already exists
-        elif not self.instance and Profile.objects.filter(email=value).exists():
-            raise serializers.ValidationError(EMAIL_EXISTS_ERROR)
-
-        return value
 
 
 class ProfileListSerializer(serializers.ModelSerializer):
@@ -56,7 +42,7 @@ class ComprehensiveProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            'id', 'name', 'email', 'bio', 'created_at', 'updated_at',
+            'id', 'name', 'email', 'bio',
             'education', 'skills', 'projects', 'work_experiences', 'social_links'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -64,7 +50,7 @@ class ComprehensiveProfileSerializer(serializers.ModelSerializer):
     def get_education(self, obj):
         """Get education data from education_api"""
         try:
-            from apps.education_api.models import Education
+            
             education_list = Education.objects.filter(profile=obj)
             return [
                 {
@@ -85,7 +71,6 @@ class ComprehensiveProfileSerializer(serializers.ModelSerializer):
     def get_skills(self, obj):
         """Get skills data from skills_api"""
         try:
-            from apps.skills_api.models import Skill
             skills_list = Skill.objects.filter(profile=obj)
             return [
                 {
@@ -102,7 +87,6 @@ class ComprehensiveProfileSerializer(serializers.ModelSerializer):
     def get_projects(self, obj):
         """Get projects data from projects_api"""
         try:
-            from apps.projects_api.models import Project
             projects_list = Project.objects.filter(profile=obj)
             return [
                 {
@@ -127,7 +111,6 @@ class ComprehensiveProfileSerializer(serializers.ModelSerializer):
     def get_work_experiences(self, obj):
         """Get work experience data from experience_api"""
         try:
-            from apps.experience_api.models import WorkExperience
             work_list = WorkExperience.objects.filter(profile=obj)
             return [
                 {
@@ -149,7 +132,6 @@ class ComprehensiveProfileSerializer(serializers.ModelSerializer):
     def get_social_links(self, obj):
         """Get social links data from social_api"""
         try:
-            from apps.social_api.models import SocialLink
             links_list = SocialLink.objects.filter(profile=obj)
             links_dict = {}
             for link in links_list:
